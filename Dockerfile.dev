@@ -3,7 +3,7 @@ FROM ruby:3.3.0-bullseye
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
-ENV BUNDLER_VERSION 2.5.4
+ENV BUNDLER_VERSION 2.5.11
 ENV RAILS_LOG_TO_STDOUT true
 ENV RAILS_ENV development
 ENV RAILS_SERVE_STATIC_FILES true
@@ -32,6 +32,10 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)
 
 # Install PostgreSQL client version 16
 RUN apt-get update && apt-get install -y postgresql-client-16
+
+# Install Bundler and Rails
+RUN gem install bundler -v $BUNDLER_VERSION
+RUN gem install rails
 
 ENV APP_PATH /work
 WORKDIR $APP_PATH
