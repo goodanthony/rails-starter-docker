@@ -1,0 +1,12 @@
+
+FROM node:20
+
+ENV APP_PATH /work
+WORKDIR $APP_PATH
+ADD . $APP_PATH
+
+RUN echo "APP_PATH: [$APP_PATH]"
+
+EXPOSE 3001
+
+ENTRYPOINT ["tail", "-f", "/dev/null"]

@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  cache:
+    image: busybox
+    tty: true
+    volumes:
+      - /npm_cache
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/work
+    volumes_from:
+      - cache

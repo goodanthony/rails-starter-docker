@@ -1,0 +1,49 @@
+# Node.js and Application Specific #
+####################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.env
+.env.local
+.env.production
+.env.test
+app/.cache
+
+# Logs and runtime data #
+#########################
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and Instrumentation #
+################################
+lib-cov/
+coverage/
+.nyc_output/
+
+# Dependency directories #
+##########################
+jspm_packages/
+
+# TypeScript #
+##############
+*.tsbuildinfo
+
+# Caches and temporary files #
+##############################
+.npm/
+.eslintcache
+.node_repl_history
+*.tgz
+.cache
+.parcel-cache
+tmp/
+temp/
+devdocs/
+
