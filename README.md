@@ -12,8 +12,16 @@ docker compose up
 Then go to docker desktop
 Find the container and open a shell and type
 
-# create a new rails app with postgres
+# create a new rails app with postgres in current directory
 
 ```bash
 rails new . --force --database=postgresql
 ```
+
+# create a new rails app with postgres in a new directory
+
+```bash
+rails new myapp --database=postgresql
+```
+
+# onc you create the app you can start a new Dockerle and docker compose file and build your dream app.
