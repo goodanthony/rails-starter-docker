@@ -7,6 +7,6 @@ ADD . $APP_PATH
 
 RUN echo "APP_PATH: [$APP_PATH]"
 
-EXPOSE 3001
+EXPOSE 3000
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]
