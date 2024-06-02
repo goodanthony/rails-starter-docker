@@ -1,49 +1,60 @@
-# Node.js and Application Specific #
-####################################
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
-.env
-.env.local
-.env.production
-.env.test
-app/.cache
+# Ignore bundler config.
+/.bundle
 
-# Logs and runtime data #
-#########################
-logs/
-*.log
-pids/
-*.pid
-*.seed
-*.pid.lock
+# Ignore all logfiles and tempfiles.
+/log/*
+!/log/.keep
+/tmp
+/tmp/*
+!/tmp/.keep
 
-# Coverage and Instrumentation #
-################################
-lib-cov/
-coverage/
-.nyc_output/
+# Ignore uploaded files in development.
+/storage/*
+!/storage/.keep
 
-# Dependency directories #
-##########################
-jspm_packages/
+# Ignore cache directories.
+/tmp/pids
+/tmp/cache
+/tmp/sockets
+/tmp/uploads
 
-# TypeScript #
-##############
-*.tsbuildinfo
+# Ignore development & test secrets
+/config/master.key
+/config/credentials.yml.enc
 
-# Caches and temporary files #
-##############################
-.npm/
-.eslintcache
-.node_repl_history
-*.tgz
-.cache
-.parcel-cache
-tmp/
-temp/
-devdocs/
+# Ignore node_modules and yarn error log.
+/node_modules
+/yarn-error.log
 
+# Ignore coverage directory.
+/coverage/
+
+# Ignore system specs results.
+/spec/examples.txt
+
+# Ignore the .git directory
+.git
+.gitignore
+
+# Ignore editor and OS-specific files
+**/.DS_Store
+**/Thumbs.db
+**/*.swp
+**/*.bak
+**/*.backup
+**/*~
+**/._*
+
+# Ignore the public/assets directory
+/public/assets
+/public/packs
+/public/packs-test
+/public/packs-dev
+/public/packs-test-dev
+
+# Ignore byebug history
+.byebug_history
+
+# Ignore Docker-related files (optional)
+Dockerfile*
+docker-compose*
