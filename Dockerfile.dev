@@ -22,6 +22,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g yarn
 
+RUN apt-get update && apt-get install -y gnupg2 wget lsb-release
+
 # Add the PostgreSQL PGP key to verify their Debian packages
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 
