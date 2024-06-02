@@ -1,5 +1,35 @@
+FROM ruby:3.3.0-bullseye
 
-FROM node:20
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+ENV BUNDLER_VERSION 2.5.4
+ENV RAILS_LOG_TO_STDOUT true
+ENV RAILS_ENV development
+ENV RAILS_SERVE_STATIC_FILES true
+
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  build-essential \
+  git \
+  libxml2-dev \
+  libxslt-dev \
+  tzdata \
+  libpq-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install -g yarn
+
+# Add the PostgreSQL PGP key to verify their Debian packages
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+
+# Add PostgreSQL's repository for the latest stable releases
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+# Install PostgreSQL client version 16
+RUN apt-get update && apt-get install -y postgresql-client-16
 
 ENV APP_PATH /work
 WORKDIR $APP_PATH
