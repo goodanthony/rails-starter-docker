@@ -29,10 +29,13 @@ RUN apt-get update && \
   gnupg2 wget lsb-release ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# PostgreSQL client 18 via PGDG (apt-key is deprecated; use signed-by)
-RUN install -d /etc/apt/keyrings \
-  && wget -qO /etc/apt/keyrings/pgdg.gpg https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-  && sh -lc 'echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+# PostgreSQL client 18 via PGDG (use dearmored keyring with signed-by)
+RUN install -d /usr/share/keyrings \
+  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | gpg --dearmor -o /usr/share/keyrings/postgresql.gpg \
+  && chmod 0644 /usr/share/keyrings/postgresql.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+  > /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-client-18 \
   && rm -rf /var/lib/apt/lists/*
@@ -42,14 +45,14 @@ RUN gem install bundler -v "${BUNDLER_VERSION}" \
   && gem install rails -v "${RAILS_VERSION}"
 
 # Bring Node/npm/npx/corepack from the Node stage
-COPY --from=node /usr/local/bin/node /usr/local/bin/node
-COPY --from=node /usr/local/bin/npm /usr/local/bin/npm
-COPY --from=node /usr/local/bin/npx /usr/local/bin/npx
-COPY --from=node /usr/local/bin/corepack /usr/local/bin/corepack
-COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+# Bring the full Node toolchain (preserves corepack layout & symlinks)
+COPY --from=node /usr/local/ /usr/local/
 
-# Enable Corepack shims (Yarn/pnpm on demand)
-RUN corepack enable
+# Enable Corepack shims (Yarn/pnpm) idempotently: remove stale links, then enable (use bash)
+RUN bash -lc 'if command -v corepack >/dev/null 2>&1; then \
+  rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm || true; \
+  corepack enable; \
+  fi'
 
 # App directory & source
 WORKDIR ${APP_PATH}

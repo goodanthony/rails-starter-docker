@@ -26,5 +26,5 @@
   "forwardPorts": [
     3000
   ],
-  "postCreateCommand": "bundle config set path '/usr/local/bundle' && corepack enable || true"
+  "postCreateCommand": "set -e; bundle config set path '/usr/local/bundle'; (rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm || true && corepack enable) || true"
 }
