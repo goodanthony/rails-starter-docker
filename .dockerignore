@@ -1,0 +1,13 @@
+node_modules
+tmp
+log
+coverage
+storage
+.git
+.gitignore
+.vscode
+.devcontainer/.cache
+Dockerfile*
+docker-compose*.yml
+*.swp
+*.bak

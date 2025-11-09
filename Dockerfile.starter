@@ -1,48 +1,70 @@
-FROM ruby:3.3.0-bullseye
+# syntax=docker/dockerfile:1
+
+# Stage: Node toolchain (to copy from)
+FROM node:24-bookworm AS node
+
+# Final stage: Ruby base
+FROM ruby:3.4-bookworm
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
-ENV BUNDLER_VERSION 2.5.11
-ENV RAILS_LOG_TO_STDOUT true
-ENV RAILS_ENV development
-ENV RAILS_SERVE_STATIC_FILES true
+ENV APP_PATH=/work \
+  RAILS_ENV=development \
+  RAILS_LOG_TO_STDOUT=true \
+  RAILS_SERVE_STATIC_FILES=true \
+  # Toolchain pins (as of Nov 2025)
+  BUNDLER_VERSION=2.7.2 \
+  RAILS_VERSION=8.1.1 \
+  # Bundler ergonomics
+  BUNDLE_JOBS=4 \
+  BUNDLE_RETRY=3 \
+  BUNDLE_PATH=/usr/local/bundle
 
+# System deps
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  build-essential \
-  git \
-  libxml2-dev \
-  libxslt-dev \
-  tzdata \
-  libpq-dev \
+  build-essential git curl tzdata \
+  libpq-dev libxml2-dev libxslt-dev libvips \
+  gnupg2 wget lsb-release ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install -g yarn
+# PostgreSQL client 18 via PGDG (use dearmored keyring with signed-by)
+RUN install -d /usr/share/keyrings \
+  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | gpg --dearmor -o /usr/share/keyrings/postgresql.gpg \
+  && chmod 0644 /usr/share/keyrings/postgresql.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+  > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-client-18 \
+  && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y gnupg2 wget lsb-release
+# Bundler & Rails
+RUN gem install bundler -v "${BUNDLER_VERSION}" \
+  && gem install rails -v "${RAILS_VERSION}"
 
-# Add the PostgreSQL PGP key to verify their Debian packages
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+# Bring Node/npm/npx/corepack from the Node stage
+# Bring the full Node toolchain (preserves corepack layout & symlinks)
+COPY --from=node /usr/local/ /usr/local/
 
-# Add PostgreSQL's repository for the latest stable releases
-RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+# Enable Corepack shims (Yarn/pnpm) idempotently: remove stale links, then enable (use bash)
+RUN bash -lc 'if command -v corepack >/dev/null 2>&1; then \
+  rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm || true; \
+  corepack enable; \
+  fi'
 
-# Install PostgreSQL client version 16
-RUN apt-get update && apt-get install -y postgresql-client-16
+# App directory & source
+WORKDIR ${APP_PATH}
+COPY --chown=${USER_ID}:${GROUP_ID} . ${APP_PATH}
 
-# Install Bundler and Rails
-RUN gem install bundler -v $BUNDLER_VERSION
-RUN gem install rails
-
-ENV APP_PATH /work
-WORKDIR $APP_PATH
-ADD . $APP_PATH
-
-RUN echo "APP_PATH: [$APP_PATH]"
+# Non-root user
+RUN groupadd --gid ${GROUP_ID} app \
+  && useradd --uid ${USER_ID} --gid ${GROUP_ID} --create-home app \
+  && chown -R app:app ${APP_PATH} /usr/local/bundle
+USER app
 
 EXPOSE 3000
 
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+# If the Rails app isn't generated yet, keep the container alive for interactive use.
+CMD bash -lc 'if [ -x ./bin/dev ]; then ./bin/dev; else echo "No bin/dev yet (generate the app with: rails new . ...)."; tail -f /dev/null; fi'

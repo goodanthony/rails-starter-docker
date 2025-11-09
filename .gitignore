@@ -1,42 +1,42 @@
-# Ignore bundler config.
+# Bundler
 /.bundle
+/vendor/bundle
 
-# Ignore all logfiles and tempfiles.
+# Logs and tempfiles
 /log/*
 !/log/.keep
-/tmp
 /tmp/*
 !/tmp/.keep
-
-# Ignore uploaded files in development.
-/storage/*
-!/storage/.keep
-
-# Ignore cache directories.
 /tmp/pids
 /tmp/cache
 /tmp/sockets
 /tmp/uploads
 
-# Ignore development & test secrets
+# Active Storage
+/storage/*
+!/storage/.keep
+
+# Credentials
 /config/master.key
 /config/credentials.yml.enc
 
-# Ignore node_modules and yarn error log.
+# Node
 /node_modules
 /yarn-error.log
 
-# Ignore coverage directory.
+# Coverage & spec artifacts
 /coverage/
-
-# Ignore system specs results.
 /spec/examples.txt
 
-# Ignore the .git directory
-.git
-.gitignore
+# Compiled assets (if present)
+/public/assets
+/public/packs
+/public/packs-test
 
-# Ignore editor and OS-specific files
+# Byebug history
+.byebug_history
+
+# OS/editor
 **/.DS_Store
 **/Thumbs.db
 **/*.swp
@@ -45,16 +45,5 @@
 **/*~
 **/._*
 
-# Ignore the public/assets directory
-/public/assets
-/public/packs
-/public/packs-test
-/public/packs-dev
-/public/packs-test-dev
-
-# Ignore byebug history
-.byebug_history
-
-# Ignore Docker-related files (optional)
-Dockerfile*
-docker-compose*
+# Dev Container cache
+.devcontainer/.cache
