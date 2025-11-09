@@ -1,19 +1,36 @@
-## Rails get started with Docker and Postgres
+# Rails + Docker + Postgres Starter (2025‑11)
 
-This is a blank project to get started with Rails, Docker and Postgres. Once you get the Rails app going please change the Dockerfile and docker-compose.yml to suit your needs.
+This starter uses **Ruby 3.4 (Debian bookworm slim)**, **Rails 8.1**, **Node 24 LTS (Corepack)**, and **PostgreSQL 18**.
 
-## To build
+> TL;DR  
+> ```bash
+> docker compose build
+> docker compose up -d db
+> docker compose run --rm app rails new . --force --database=postgresql
+> docker compose up
+> ```
+> Then visit http://localhost:3000
+
+---
+
+or ie:
+docker compose run --rm app rails new . --force --database=postgresql --css=tailwind --javascript=importmap
+
+
+## 1) Build and boot
 
 ```bash
+# Build images
 docker compose build
-docker compose up
-```
 
-Then go to docker desktop
-Find the container and open a shell and type
+# Start Postgres first
+docker compose up -d db
 
-# create a new rails app with postgres
 
-```bash
-rails new . --force --database=postgresql
-```
+Good commands
+docker compose run --rm app bin/rails db:migrate
+docker compose run --rm app bin/rails g scaffold Post title:string
+
+# Console & tests
+docker compose run --rm app bin/rails console
+docker compose run --rm app bin/rspec 
