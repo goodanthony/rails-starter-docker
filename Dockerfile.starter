@@ -1,22 +1,23 @@
 # syntax=docker/dockerfile:1
 
-# Stage: Node toolchain (to copy from)
-FROM node:24-bookworm AS node
+ARG RUBY_VERSION=4.0.6
+ARG NODE_VERSION=24
+ARG DEBIAN_RELEASE=bookworm
 
-# Final stage: Ruby base
-FROM ruby:3.4-bookworm
+# Keep Node on the current LTS line and Ruby on an exact stable patch.
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim AS node
+FROM ruby:${RUBY_VERSION}-slim-${DEBIAN_RELEASE}
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
+ARG BUNDLER_VERSION=4.0.17
+ARG RAILS_VERSION=8.1.3
 
 ENV APP_PATH=/work \
+  BINDING=0.0.0.0 \
   RAILS_ENV=development \
   RAILS_LOG_TO_STDOUT=true \
   RAILS_SERVE_STATIC_FILES=true \
-  # Toolchain pins (as of Nov 2025)
-  BUNDLER_VERSION=2.7.2 \
-  RAILS_VERSION=8.1.1 \
-  # Bundler ergonomics
   BUNDLE_JOBS=4 \
   BUNDLE_RETRY=3 \
   BUNDLE_PATH=/usr/local/bundle
@@ -40,19 +41,25 @@ RUN install -d /usr/share/keyrings \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-client-18 \
   && rm -rf /var/lib/apt/lists/*
 
-# Bundler & Rails
-RUN gem install bundler -v "${BUNDLER_VERSION}" \
-  && gem install rails -v "${RAILS_VERSION}"
+# Keep the generator toolchain separate from the replaceable application
+# bundle volume.
+ENV GEM_HOME=/usr/local/rails-toolchain \
+  PATH=/usr/local/rails-toolchain/bin:${PATH}
 
-# Bring Node/npm/npx/corepack from the Node stage
-# Bring the full Node toolchain (preserves corepack layout & symlinks)
-COPY --from=node /usr/local/ /usr/local/
+# Install the exact generator toolchain.
+RUN gem install bundler -v "${BUNDLER_VERSION}" --no-document \
+  && gem install rails -v "${RAILS_VERSION}" --no-document
 
-# Enable Corepack shims (Yarn/pnpm) idempotently: remove stale links, then enable (use bash)
-RUN bash -lc 'if command -v corepack >/dev/null 2>&1; then \
-  rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm || true; \
-  corepack enable; \
-  fi'
+# Copy only the Node toolchain; copying all of /usr/local would overwrite Ruby
+# executables installed in the previous layer.
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+
+# Enable Corepack shims for Rails apps generated with a JavaScript bundler.
+RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+  && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+  && ln -sf ../lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack \
+  && corepack enable
 
 # App directory & source
 WORKDIR ${APP_PATH}
@@ -66,5 +73,6 @@ USER app
 
 EXPOSE 3000
 
-# If the Rails app isn't generated yet, keep the container alive for interactive use.
-CMD bash -lc 'if [ -x ./bin/dev ]; then ./bin/dev; else echo "No bin/dev yet (generate the app with: rails new . ...)."; tail -f /dev/null; fi'
+# Support both full-stack apps (bin/dev) and API-only apps (bin/rails).
+# Before generation, keep the service alive so it can be used interactively.
+CMD ["bash", "-c", "if [ -x ./bin/dev ]; then exec ./bin/dev; elif [ -x ./bin/rails ]; then exec ./bin/rails server -b 0.0.0.0; else echo 'No Rails app yet. Follow README.md to generate one.'; exec tail -f /dev/null; fi"]

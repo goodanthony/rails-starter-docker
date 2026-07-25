@@ -1,8 +1,8 @@
 services:
   db:
-    image: postgres:18
+    image: postgres:18.4
     environment:
-      POSTGRES_DB: app_development
+      POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       # PG 18+ uses a versioned default path inside the image; set explicitly for clarity
@@ -25,9 +25,13 @@ services:
         GROUP_ID: ${GID:-1000}
     environment:
       RAILS_ENV: development
+      BINDING: 0.0.0.0
       RAILS_LOG_TO_STDOUT: "true"
       RAILS_SERVE_STATIC_FILES: "true"
-      DATABASE_URL: postgres://postgres:postgres@db:5432/app_development
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
       BUNDLE_PATH: /usr/local/bundle
     volumes:
       - .:/work:delegated
