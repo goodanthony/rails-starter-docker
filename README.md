@@ -1,131 +1,123 @@
-# Rails + Docker + Postgres Starter (2025‑11)
+# Latest Rails + Docker + PostgreSQL Starter
 
-This starter uses **Ruby 3.4 (Debian bookworm slim)**, **Rails 8.1**, **Node 24 LTS (Corepack)**, and **PostgreSQL 18**.
+Generate a new Rails application without installing Ruby, Rails, Node.js, or
+PostgreSQL on the host.
 
-## Quick Start
+The starter currently pins:
+
+| Tool | Version |
+| --- | --- |
+| Ruby | 4.0.6 |
+| Rails | 8.1.3 |
+| Bundler | 4.0.17 |
+| Node.js | 24 LTS |
+| PostgreSQL | 18.4 |
+
+The Ruby, Rails, Bundler, and PostgreSQL patch releases are exact so a rebuild is
+repeatable. Node.js follows the supported Node 24 LTS patch line.
+
+## Prerequisites
+
+- Docker Desktop, or Docker Engine with Docker Compose v2
+- Git
+
+No host Ruby or Node.js installation is required.
+
+## Quick start
+
+From the repository root:
+
 ```bash
-# Build images
+# Build the development image.
 docker compose build
 
-# Start Postgres first
+# Start PostgreSQL and wait for its health check.
 docker compose up -d db
 
-# Generate your Rails app (choose one option below)
-docker compose run --rm app rails new . --force --database=postgresql
+# Generate the default full-stack Rails app in this directory.
+# --skip-docker keeps this starter's development Docker setup.
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql
 
-# Start the app
+# Prepare the development and test databases.
+docker compose run --rm app bin/rails db:prepare
+
+# Start Rails and PostgreSQL.
 docker compose up
 ```
 
-Then visit http://localhost:3000
+Open <http://localhost:3000>.
 
----
+`rails new` replaces this README with the generated application README.
+Ongoing Docker commands remain available in [DOCKER.md](DOCKER.md).
 
-## Rails App Generation Options
+## Choose an application type
 
-Choose the setup that fits your needs:
+Run one of these commands instead of the default `rails new` command above.
+
+### Default Rails stack
+
+Hotwire, importmap, Propshaft, and the current Rails defaults:
+
 ```bash
-# Minimal setup (API mode)
-docker compose run --rm app rails new . --force --database=postgresql
-
-# With Tailwind CSS
-docker compose run --rm app rails new . --force --database=postgresql --css=tailwind
-
-# With importmap (no build step)
-docker compose run --rm app rails new . --force --database=postgresql --javascript=importmap
-
-# Full-stack with Tailwind + importmap
-docker compose run --rm app rails new . --force --database=postgresql --css=tailwind --javascript=importmap
-
-# With esbuild (modern JS bundling)
-docker compose run --rm app rails new . --force --database=postgresql --javascript=esbuild
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql
 ```
 
----
+### API-only Rails app
 
-## Common Commands
-
-### Database Operations
 ```bash
-# Create databases
-docker compose run --rm app bin/rails db:create
-
-# Run migrations
-docker compose run --rm app bin/rails db:migrate
-
-# Rollback last migration
-docker compose run --rm app bin/rails db:rollback
-
-# Load schema
-docker compose run --rm app bin/rails db:schema:load
-
-# Seed database
-docker compose run --rm app bin/rails db:seed
-
-# Reset database (drop, create, migrate, seed)
-docker compose run --rm app bin/rails db:reset
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql --api
 ```
 
-### Generators
+### Tailwind CSS
+
 ```bash
-# Generate a scaffold
-docker compose run --rm app bin/rails g scaffold Post title:string body:text published:boolean
-
-# Generate a model
-docker compose run --rm app bin/rails g model User email:string name:string
-
-# Generate a controller
-docker compose run --rm app bin/rails g controller Pages home about contact
-
-# Generate a migration
-docker compose run --rm app bin/rails g migration AddSlugToPosts slug:string:index
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql --css=tailwind
 ```
 
-### Development Tools
+### esbuild
+
 ```bash
-# Rails console
-docker compose run --rm app bin/rails console
-
-# Run tests
-docker compose run --rm app bin/rails test
-
-# Run RSpec (if installed)
-docker compose run --rm app bin/rspec
-
-# Rails routes
-docker compose run --rm app bin/rails routes
-
-# Rails stats
-docker compose run --rm app bin/rails stats
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql --javascript=esbuild
 ```
 
-### Credentials & Secrets
-```bash
-# Edit credentials (uses $EDITOR, default: vi)
-docker compose run --rm app bin/rails credentials:edit
+### Tailwind CSS and esbuild
 
-# Show credentials
-docker compose run --rm app bin/rails credentials:show
+```bash
+docker compose run --rm app \
+  rails new . --force --skip-docker --database=postgresql \
+  --css=tailwind --javascript=esbuild
 ```
 
-### Bundle & Dependencies
+See every option supported by this pinned Rails release:
+
 ```bash
-# Install gems
-docker compose run --rm app bundle install
-
-# Update a specific gem
-docker compose run --rm app bundle update rails
-
-# Add a gem (edit Gemfile first, then:)
-docker compose run --rm app bundle install
-
-# Install JS dependencies (if using npm/yarn)
-docker compose run --rm app yarn install
+docker compose run --rm app rails new --help
 ```
 
-### Container Management
-```bash
-# View logs
-docker compose logs -f app
+## Verify the toolchain
 
-# Restart services
+```bash
+docker compose run --rm app bash -c \
+  'ruby --version; rails --version; bundle --version; node --version; psql --version'
+```
+
+Expected major versions are Ruby 4.0, Rails 8.1, Bundler 4.0, Node 24, and
+PostgreSQL client 18.
+
+## How it works
+
+- `Dockerfile.starter` provides the Rails generator and development toolchain.
+- `docker-compose.yml` mounts the repository at `/work`.
+- The `bundle` volume caches installed gems.
+- The `pgdata` volume preserves PostgreSQL data.
+- The container runs as an unprivileged `app` user.
+- Full-stack apps start with `bin/dev`; API-only apps fall back to
+  `bin/rails server`.
+
+After generation, use [DOCKER.md](DOCKER.md) for common development, database,
+test, and container commands.
